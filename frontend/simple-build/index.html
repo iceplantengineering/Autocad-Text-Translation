@@ -275,7 +275,7 @@
                         <label for="fileInput" class="file-label">
                             <div class="upload-icon">📁</div>
                             <p>DWG/DXFファイルを選択またはドラッグ＆ドロップ</p>
-                            <p class="file-hint">AutoCAD DWG/DXFファイルに対応（テスト用）</p>
+                            <p class="file-hint">AutoCAD DWG/DXFファイルに対応（DWGは変換ツール要）</p>
                         </label>
                     </div>
 
@@ -326,6 +326,11 @@
                         <p>元のフォント、サイズ、位置、レイヤーなどの書式を完全に保持</p>
                     </div>
                     <div class="feature-card">
+                        <div class="feature-icon">🔄</div>
+                        <h3>DWG/DXF対応</h3>
+                        <p>AutoCAD DWGファイルとDXFファイルの両方に対応（DWGは変換ツールが必要）</p>
+                    </div>
+                    <div class="feature-card">
                         <div class="feature-icon">⚡</div>
                         <h3>高速処理</h3>
                         <p>バックグラウンド処理による高速な翻訳とリアルタイム進捗表示</p>
@@ -338,7 +343,7 @@
     <script>
         let currentFile = null;
         let currentJobId = null;
-        const API_URL = 'http://localhost:8001'; // ローカルテスト用バックエンドURL
+        const API_URL = 'http://localhost:8002'; // デバッグバックエンドURL
 
         document.getElementById('fileInput').addEventListener('change', function(e) {
             const file = e.target.files[0];
