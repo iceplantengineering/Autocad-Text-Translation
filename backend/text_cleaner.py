@@ -8,24 +8,36 @@ class TextCleaner:
     def __init__(self):
         # DXF/MTEXT format codes to remove
         self.format_patterns = [
-            # MTEXT formatting codes
-            r'\\pi-?\d+,-?\d+;',      # Paragraph indentation
-            r'\\pi-?\d+;',            # Paragraph indentation (simplified)
-            r'\\P',                   # Paragraph break
-            r'\\p\d+;',               # Paragraph formatting
-            r'\\l\d+;',               # Line spacing
-            r'\\f[^;]+;',             # Font specification
-            r'\\[HOQTL]+;?',          # Justification codes
-            r'\\[cC]\d+;',            # Color specification
-            r'\\[hH]\d+\.?\d*;',     # Text height
-            r'\\[wW]\d+\.?\d*;',     # Width factor
-            r'\\[aA]\d+;',            # Alignment angle
-            r'\\[qQ]\d+;',            # Oblique angle
-            r'\\[Ss](?:.*?);',       # Stacking text
-            r'\\[{}]',                # Braces
-            r'\{.*?\}',               # Content in braces
-            r'\\[A-Za-z]\d*;',       # Other format codes
-            r'\{\\[^}]+\}',          # Format codes in braces
+            # MTEXT formatting codes - handle both single and double backslash
+            r'\\?pi-?\d+,-?\d+;',     # Paragraph indentation (with optional backslash)
+            r'\\?pi-?\d+;',           # Paragraph indentation simplified (with optional backslash)
+            r'\\?P',                  # Paragraph break (with optional backslash)
+            r'\\?p\d+;',              # Paragraph formatting (with optional backslash)
+            r'\\?l\d+;',              # Line spacing (with optional backslash)
+            r'\\?f[^;]+;',            # Font specification (with optional backslash)
+            r'\\?[HOQTL]+;?',         # Justification codes (with optional backslash)
+            r'\\?[cC]\d+;',           # Color specification (with optional backslash)
+            r'\\?[hH]\d+\.?\d*;',    # Text height (with optional backslash)
+            r'\\?[wW]\d+\.?\d*;',    # Width factor (with optional backslash)
+            r'\\?[aA]\d+;',           # Alignment angle (with optional backslash)
+            r'\\?[qQ]\d+;',           # Oblique angle (with optional backslash)
+            r'\\?[Ss](?:.*?);',      # Stacking text (with optional backslash)
+            r'\\?[{}]',               # Braces (with optional backslash)
+            r'\{.*?\}',              # Content in braces
+            r'\\?[A-Za-z]\d*;',      # Other format codes (with optional backslash)
+            r'\{\\?[^}]+\}',         # Format codes in braces (with optional backslash)
+
+            # Additional patterns for broken/incomplete format codes - be more conservative
+            # Only remove patterns that are clearly format codes, not technical data
+            r'[a-zA-Z]\d+;',         # Incomplete format codes without backslash (like "i0;") but only if standalone
+            r'[a-zA-Z]+;',           # Single letter format codes
+            r'[a-zA-Z]+\d*[,:]\d*;', # Format codes with commas or colons
+            # Remove numbers with semicolon only if they appear to be format codes
+            r'(?<!\d)\d+;(?!\d)',    # Numbers with semicolon, not surrounded by other numbers
+            # Remove isolated letter+number combinations that are likely format codes
+            r'\b[a-zA-Z]\d+\b(?!\s*(?:X|kg|mm|℃|min|m))',  # Isolated letter+number but not in technical contexts
+            # Be very careful with numbers mixed with letters - only remove obvious format codes
+            r'\s+[a-zA-Z]\d+\s+(?!\d)',       # Space surrounded letter+number with no digits adjacent
         ]
 
         # Special characters to clean
@@ -33,6 +45,14 @@ class TextCleaner:
             (r'[\x00-\x1f\x7f-\x9f]', ''),  # Control characters
             (r'\s+', ' '),                   # Multiple spaces to single space
             (r'^\s+|\s+$', ''),             # Leading/trailing spaces
+            # Chinese punctuation and symbols to normalize
+            (r'[，,、。；：！？""''（）【】《》〈〉…—]+', ' '),  # Chinese punctuation to space
+            (r'[:：]', ' '),               # Colon variants to space
+            (r'[;；]', ' '),               # Semicolon variants to space
+            (r'[-—]', ' '),               # Dash variants to space
+            (r'[（）\(\)]', ' '),          # Parentheses variants to space
+            (r'[、]', '/'),                # Enumeration comma to slash
+            (r'[・·]', '・'),              # Middle dot (keep as is)
         ]
 
         # Compile regex patterns
@@ -47,7 +67,7 @@ class TextCleaner:
         original_text = text
         cleaned_text = text
 
-        # Remove DXF formatting codes
+        # Remove DXF formatting codes first
         for pattern in self.format_regex:
             cleaned_text = pattern.sub('', cleaned_text)
 
@@ -58,6 +78,14 @@ class TextCleaner:
         # Remove extra whitespace
         cleaned_text = ' '.join(cleaned_text.split())
 
+        # Post-processing: fix common formatting issues and restore technical data
+        # The main issue is that numbers are being stripped by format code regexes
+        # Let's try to reconstruct some common technical patterns
+
+        # Fix common number-unit separations
+        cleaned_text = re.sub(r'(\d+)\s+(kg|mm|℃|min)', r'\1\2', cleaned_text)
+        cleaned_text = re.sub(r'(\d+)\s*\.\s*(\d+)', r'\1.\2', cleaned_text)
+
         logger.debug(f"Text cleaning: '{original_text}' -> '{cleaned_text}'")
         return cleaned_text.strip()
 
@@ -66,11 +94,13 @@ class TextCleaner:
         if not text:
             return text
 
+        # Use the main clean_text method which now includes Chinese punctuation handling
         cleaned = self.clean_text(text)
 
-        # Additional cleaning for Chinese text
-        cleaned = re.sub(r'[，,、。；：！？""''（）【】《》〈〉…—]+', ' ', cleaned)  # Chinese punctuation to space
-        cleaned = re.sub(r'[a-zA-Z0-9\s]+[\u4e00-\u9fff]', lambda m: m.group(), cleaned)  # Keep mixed content
+        # Additional Chinese-specific processing
+        # Keep alphanumeric mixed with Chinese intact
+        cleaned = re.sub(r'([a-zA-Z0-9]+)\s+([\u4e00-\u9fff])', r'\1\2', cleaned)  # Join separated alphanumeric-Chinese
+        cleaned = re.sub(r'([\u4e00-\u9fff])\s+([a-zA-Z0-9]+)', r'\1\2', cleaned)  # Join separated Chinese-alphanumeric
 
         return cleaned.strip()
 

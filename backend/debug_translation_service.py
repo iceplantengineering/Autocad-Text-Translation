@@ -185,7 +185,37 @@ class DebugTranslationService:
             "厂房": "建屋",
             "内": "内部",
             "净空": "クリアランス",
-            "高度": "高さ"
+            "高度": "高さ",
+
+            # 具体的技术术语（完整短语）
+            "长2000X宽500X高600mm": "長2000X幅500X高600mm",
+            "最大重量 5kg/只": "最大重量5kg/個",
+            "烘干时间45min/车": "乾燥時間45分/台車",
+            "烘干温度80℃": "乾燥温度80℃",
+            "建议厂房内净空高度6.5m": "推奨建屋内クリアランス高さ6.5m",
+            "卡车保险杠等塑料件": "トラックバンパー等プラスチック部品",
+            "工艺台车运输": "工程台車搬送",
+            "人工推拉": "手動押し引き",
+            "单个保险杠放在喷漆室内设喷漆台进行喷涂": "個別バンパーを塗装室内の塗装台に設置して塗装実施",
+            "油漆烘干": "塗装乾燥",
+            "货淋室外购": "シャワーブース外注",
+            "建议厂家按图制作": "メーカーに図面通り製作を依頼",
+            "进出口采用电动卷帘门": "出入口に電動シャッター扉を採用",
+            "喷漆室采用干式纸盒": "塗装室にドライ式ペーパーボックスを採用",
+            "侧排风结构": "側面排風構造",
+            "送风机组": "送風ユニット",
+            "排风机组均布置在二层平台上": "排風ユニットを2階プラットフォームに配置",
+            "室体采用镀锌板结构": "ルーム本体に亜鉛メッキ鋼板構造を採用",
+            "采用手动推拉门": "手動スライド扉を採用",
+            "烘干采用柴油加热炉": "乾燥にディーゼル加熱炉を採用",
+            "燃烧器放在烘干室顶部二层钢平台上": "バーナーを乾燥室天井の2階鋼製プラットフォームに設置",
+            "热风循环加热": "熱風循環加熱",
+            "上送风下回风": "上側送風、下側還風",
+            "进出口采用旋转门": "出入口に回転扉を採用",
+            "人工开启": "手動開閉",
+            "烘干室内腔高度控制在2m左右": "乾燥室内部高さを2m前後に制御",
+            "遮蔽工作台": "マスキング作業台",
+            "工艺台车客户自备": "工程台車は客先支給"
         }
 
     def detect_chinese_text(self, text: str) -> bool:
@@ -243,8 +273,15 @@ class DebugTranslationService:
                 # スペースを除去したバージョンも試す
                 text.replace(' ', ''),
                 cleaned_text.replace(' ', ''),
-                extracted_chinese.replace(' ', '')
+                extracted_chinese.replace(' ', ''),
+                # スペースを正規化したバージョン（全角スペースを半角に、複数スペースを1つに）
+                ' '.join(text.split()),
+                ' '.join(cleaned_text.split()),
+                ' '.join(extracted_chinese.split())
             ]
+
+            # デバッグ情報：検索対象テキストを表示
+            logger.debug(f"Searching for matches among: {normalized_texts}")
 
             for source_text in normalized_texts:
                 if source_text and source_text in self.mock_translations:
@@ -295,6 +332,8 @@ class DebugTranslationService:
 
             # それでも見つからない場合
             if not translated_text or translated_text == cleaned_text:
+                # デバッグ：辞書のキーを表示してマッチしない理由を調査
+                logger.debug(f"Available dict keys containing Chinese: {[k for k in self.mock_translations.keys() if any(ord(c) >= 0x4E00 and ord(c) <= 0x9FFF for c in k)]}")
                 translated_text = f"[翻訳済み: {extracted_chinese or cleaned_text}]"
                 logger.debug(f"No translation found, using fallback: '{translated_text}'")
 

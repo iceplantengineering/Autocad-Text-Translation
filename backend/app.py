@@ -8,7 +8,8 @@ from typing import List, Optional
 import asyncio
 from datetime import datetime
 from dwg_processor import DWGProcessor
-from translation_service import TranslationService
+from debug_translation_service import DebugTranslationService
+from text_cleaner import TextCleaner
 
 app = FastAPI(title="AutoCAD DWG Translator API", version="1.0.0")
 
@@ -27,7 +28,7 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(PROCESSED_DIR, exist_ok=True)
 
 dwg_processor = DWGProcessor()
-translation_service = TranslationService()
+translation_service = DebugTranslationService()
 
 class TranslationJob:
     def __init__(self, job_id: str, filename: str, file_path: str):
@@ -85,7 +86,7 @@ async def process_translation(job_id: str):
         # Create translation mapping
         text_to_translation = {}
         for i, result in enumerate(translation_results):
-            text_to_translation[chinese_texts[i]] = result.translated_text
+            text_to_translation[chinese_texts[i]] = result['translated_text']
 
         job.status = "replacing"
         job.progress = 70
