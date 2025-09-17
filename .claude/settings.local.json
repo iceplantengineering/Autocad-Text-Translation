@@ -11,7 +11,9 @@
       "Bash(git push:*)",
       "Bash(npm install:*)",
       "Bash(npm run build:*)",
-      "Read(//d/Users/ymj/Desktop/**)"
+      "Read(//d/Users/ymj/Desktop/**)",
+      "Bash(pip install:*)",
+      "Bash(python:*)"
     ],
     "deny": [],
     "ask": []
