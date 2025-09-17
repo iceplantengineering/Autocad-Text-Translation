@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoCAD DWG Translator</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+                'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+                sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 2rem 1rem;
+            color: white;
+            border-radius: 20px;
+            margin-bottom: 2rem;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .main {
+            flex: 1;
+        }
+
+        .upload-section {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .file-upload {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .upload-area {
+            width: 100%;
+            max-width: 500px;
+            border: 3px dashed #ddd;
+            border-radius: 15px;
+            padding: 3rem 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .upload-area:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .file-input {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-label {
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            opacity: 0.7;
+        }
+
+        .file-hint {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 1rem;
+        }
+
+        .selected-file {
+            margin-top: 2rem;
+            text-align: center;
+        }
+
+        .selected-file p {
+            font-size: 1.1rem;
+            color: #333;
+            margin-bottom: 1rem;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .progress-section {
+            text-align: center;
+            margin-top: 2rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            max-width: 500px;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 0 auto 1rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .features-section {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .features-section h2 {
+            font-size: 2rem;
+            color: #333;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-card {
+            text-align: center;
+            padding: 1.5rem;
+            border-radius: 15px;
+            background: rgba(102, 126, 234, 0.05);
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .error {
+            color: #d32f2f;
+            background: #ffebee;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+        }
+
+        .success {
+            color: #2e7d32;
+            background: #e8f5e8;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .subtitle {
+                font-size: 1rem;
+            }
+
+            .container {
+                padding: 1rem;
+            }
+
+            .upload-section, .features-section {
+                padding: 1.5rem;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>AutoCAD DWG 中国語→日本語 翻訳ツール</h1>
+            <p class="subtitle">
+                AutoCAD DWGファイル内の中国語テキストを自動翻訳し、元のフォーマットを保持したまま日本語に変換します
+            </p>
+        </div>
+
+        <div class="main">
+            <div class="upload-section">
+                <div class="file-upload">
+                    <div class="upload-area">
+                        <input type="file" accept=".dwg" class="file-input" id="fileInput">
+                        <label for="fileInput" class="file-label">
+                            <div class="upload-icon">📁</div>
+                            <p>DWGファイルを選択またはドラッグ＆ドロップ</p>
+                            <p class="file-hint">AutoCAD 2012以降のDWGファイルに対応</p>
+                        </label>
+                    </div>
+
+                    <div class="selected-file hidden" id="selectedFile">
+                        <p>選択されたファイル: <strong id="fileName"></strong></p>
+                        <button class="btn btn-primary" onclick="uploadFile()">アップロードして翻訳開始</button>
+                    </div>
+
+                    <div class="progress-section hidden" id="progressSection">
+                        <h3>処理中...</h3>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                        <p id="progressText">0% 完了</p>
+                    </div>
+
+                    <div class="success hidden" id="successSection">
+                        <h3>✅ 翻訳が完了しました！</h3>
+                        <p>中国語テキストが日本語に翻訳され、元のフォーマットが保持されています。</p>
+                        <button class="btn btn-success" onclick="downloadFile()">翻訳済みファイルをダウンロード</button>
+                        <button class="btn btn-secondary" onclick="resetForm()" style="margin-left: 1rem;">別のファイルを翻訳</button>
+                    </div>
+
+                    <div class="error hidden" id="errorSection">
+                        <h3>❌ エラーが発生しました</h3>
+                        <p id="errorMessage"></p>
+                        <button class="btn btn-secondary" onclick="resetForm()">再試行</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="features-section">
+                <h2>主な機能</h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🔍</div>
+                        <h3>テキスト抽出</h3>
+                        <p>MTEXT、TEXT、ATTRIB、DIMTEXTなどの各種エンティティからテキストを抽出</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🌐</div>
+                        <h3>高精度翻訳</h3>
+                        <p>DeepLまたはGoogle翻訳APIを使用した専門的な技術翻訳</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📐</div>
+                        <h3>フォーマット保持</h3>
+                        <p>元のフォント、サイズ、位置、レイヤーなどの書式を完全に保持</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">⚡</div>
+                        <h3>高速処理</h3>
+                        <p>バックグラウンド処理による高速な翻訳とリアルタイム進捗表示</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentFile = null;
+        let currentJobId = null;
+        const API_URL = 'https://your-backend-api-url.com'; // ここを実際のバックエンドURLに置き換えてください
+
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file && file.name.toLowerCase().endsWith('.dwg')) {
+                currentFile = file;
+                document.getElementById('fileName').textContent = file.name;
+                document.getElementById('selectedFile').classList.remove('hidden');
+                document.getElementById('errorSection').classList.add('hidden');
+            } else {
+                showError('Please select a valid DWG file');
+            }
+        });
+
+        async function uploadFile() {
+            if (!currentFile) return;
+
+            showProgress();
+
+            const formData = new FormData();
+            formData.append('file', currentFile);
+
+            try {
+                const response = await fetch(`${API_URL}/upload`, {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    currentJobId = data.job_id;
+                    pollJobStatus(data.job_id);
+                } else {
+                    const errorData = await response.json();
+                    showError(errorData.detail || 'Upload failed');
+                }
+            } catch (err) {
+                showError('Network error: ' + err.message);
+            }
+        }
+
+        async function pollJobStatus(jobId) {
+            const interval = setInterval(async () => {
+                try {
+                    const response = await fetch(`${API_URL}/jobs/${jobId}`);
+                    if (response.ok) {
+                        const job = await response.json();
+                        updateProgress(job.progress);
+
+                        if (job.status === 'completed') {
+                            clearInterval(interval);
+                            showSuccess();
+                        } else if (job.status === 'failed') {
+                            clearInterval(interval);
+                            showError(job.error_message || 'Processing failed');
+                        }
+                    }
+                } catch (err) {
+                    clearInterval(interval);
+                    showError('Error checking status: ' + err.message);
+                }
+            }, 2000);
+        }
+
+        async function downloadFile() {
+            if (!currentJobId) return;
+
+            try {
+                const response = await fetch(`${API_URL}/download/${currentJobId}`);
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `translated_${currentFile.name}`;
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                }
+            } catch (err) {
+                showError('Download failed: ' + err.message);
+            }
+        }
+
+        function showProgress() {
+            document.getElementById('selectedFile').classList.add('hidden');
+            document.getElementById('progressSection').classList.remove('hidden');
+            document.getElementById('successSection').classList.add('hidden');
+            document.getElementById('errorSection').classList.add('hidden');
+        }
+
+        function updateProgress(progress) {
+            document.getElementById('progressFill').style.width = progress + '%';
+            document.getElementById('progressText').textContent = progress + '% 完了';
+        }
+
+        function showSuccess() {
+            document.getElementById('progressSection').classList.add('hidden');
+            document.getElementById('successSection').classList.remove('hidden');
+            document.getElementById('errorSection').classList.add('hidden');
+        }
+
+        function showError(message) {
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('progressSection').classList.add('hidden');
+            document.getElementById('successSection').classList.add('hidden');
+            document.getElementById('errorSection').classList.remove('hidden');
+        }
+
+        function resetForm() {
+            currentFile = null;
+            currentJobId = null;
+            document.getElementById('fileInput').value = '';
+            document.getElementById('selectedFile').classList.add('hidden');
+            document.getElementById('progressSection').classList.add('hidden');
+            document.getElementById('successSection').classList.add('hidden');
+            document.getElementById('errorSection').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
