@@ -12,7 +12,7 @@ start "Frontend Server" cmd /k "cd /d D:\Users\ymj\Desktop\ZAItry\frontend\simpl
 
 echo.
 echo Servers are starting...
-echo Backend: http://localhost:8000
+echo Backend: http://localhost:8001
 echo Frontend: http://localhost:3000
 echo.
 echo Press any key to open the application in your browser...
@@ -22,9 +22,9 @@ start http://localhost:3000
 
 echo.
 echo Test Environment Ready!
-echo - Backend: http://localhost:8000
+echo - Backend: http://localhost:8001
 echo - Frontend: http://localhost:3000
-echo - API Health: http://localhost:8000/health
+echo - API Health: http://localhost:8001/health
 echo.
 echo To test:
 echo 1. Open http://localhost:3000 in your browser

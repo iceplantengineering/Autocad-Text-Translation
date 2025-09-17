@@ -7,7 +7,7 @@ import tempfile
 from typing import List, Optional
 import asyncio
 from datetime import datetime
-from dwg_processor import DWGProcessor
+from simple_dwg_processor import SimpleDWGProcessor
 from mock_translation_service import MockTranslationService
 
 app = FastAPI(title="AutoCAD DWG Translator API (Test Version)", version="1.0.0")
@@ -26,7 +26,7 @@ PROCESSED_DIR = "processed"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(PROCESSED_DIR, exist_ok=True)
 
-dwg_processor = DWGProcessor()
+dwg_processor = SimpleDWGProcessor()
 translation_service = MockTranslationService()
 
 class TranslationJob:
@@ -110,8 +110,8 @@ async def process_translation(job_id: str):
 
 @app.post("/upload")
 async def upload_file(file: UploadFile = File(...), background_tasks: BackgroundTasks = None):
-    if not file.filename.lower().endswith('.dwg'):
-        raise HTTPException(status_code=400, detail="Only DWG files are supported")
+    if not (file.filename.lower().endswith('.dwg') or file.filename.lower().endswith('.dxf')):
+        raise HTTPException(status_code=400, detail="Only DWG and DXF files are supported")
 
     job_id = str(uuid.uuid4())
     file_path = os.path.join(UPLOAD_DIR, f"{job_id}_{file.filename}")
@@ -208,4 +208,4 @@ async def root():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8001)
