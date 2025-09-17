@@ -346,7 +346,7 @@
         // 環境に応じてAPI URLを設定
         const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
             ? 'http://localhost:8002' // ローカル開発環境
-            : 'https://autocad-translator-backend.onrender.com'; // 本番環境（Renderなど）
+            : 'https://autocad-text-translation-backend.onrender.com'; // 本番環境（Renderなど）
 
         document.getElementById('fileInput').addEventListener('change', function(e) {
             const file = e.target.files[0];
