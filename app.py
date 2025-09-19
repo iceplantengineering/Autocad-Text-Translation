@@ -4,6 +4,7 @@ Render entry point - redirects to backend app
 """
 import sys
 import os
+import uvicorn
 
 # Add backend to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'backend'))
