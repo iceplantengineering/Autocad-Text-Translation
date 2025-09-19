@@ -16,6 +16,7 @@ app = FastAPI(title="AutoCAD DWG Translator API", version="1.0.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
+        "https://68cd66c628bbf420fb0c3b07--autocad-text-translation.netlify.app",
         "https://autocad-text-translation.netlify.app",
         "http://localhost:3000",
         "http://localhost:8000"
