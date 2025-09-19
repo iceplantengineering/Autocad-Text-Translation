@@ -11,17 +11,7 @@ services:
   - type: web
     name: autocad-translator-backend
     runtime: python
-    buildCommand: |
-      apt-get update &&
-      apt-get install -y wget build-essential autoconf automake libtool pkg-config &&
-      wget https://github.com/LibreDWG/libredwg/releases/download/v0.12.4/libredwg-0.12.4.tar.gz &&
-      tar -xzf libredwg-0.12.4.tar.gz &&
-      cd libredwg-0.12.4 &&
-      ./configure --prefix=/usr/local &&
-      make -j4 &&
-      make install &&
-      cd /opt/render/project/src &&
-      pip install -r requirements.txt
+    buildCommand: pip install -r requirements.txt
     startCommand: python app.py
     envVars:
       - key: PYTHON_VERSION

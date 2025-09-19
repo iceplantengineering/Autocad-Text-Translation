@@ -11,11 +11,11 @@ const App = () => {
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
-    if (selectedFile && selectedFile.name.toLowerCase().endsWith('.dwg')) {
+    if (selectedFile && (selectedFile.name.toLowerCase().endsWith('.dwg') || selectedFile.name.toLowerCase().endsWith('.dxf'))) {
       setFile(selectedFile);
       setError(null);
     } else {
-      setError('Please select a valid DWG file');
+      setError('Please select a valid DWG or DXF file');
     }
   };
 

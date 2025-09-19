@@ -120,8 +120,8 @@ async def process_translation(job_id: str):
 
 @app.post("/upload")
 async def upload_file(file: UploadFile = File(...), background_tasks: BackgroundTasks = None):
-    if not file.filename.lower().endswith('.dwg'):
-        raise HTTPException(status_code=400, detail="Only DWG files are supported")
+    if not (file.filename.lower().endswith('.dwg') or file.filename.lower().endswith('.dxf')):
+        raise HTTPException(status_code=400, detail="Only DWG and DXF files are supported")
 
     job_id = str(uuid.uuid4())
     file_path = os.path.join(UPLOAD_DIR, f"{job_id}_{file.filename}")

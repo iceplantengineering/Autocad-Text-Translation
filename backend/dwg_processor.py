@@ -31,6 +31,16 @@ class DWGProcessor:
         try:
             dxf_path = dwg_path.rsplit('.', 1)[0] + '.dxf'
 
+            # Try using ezdxf directly first (supports some DWG formats)
+            try:
+                import ezdxf
+                doc = ezdxf.readfile(dwg_path)
+                doc.saveas(dxf_path)
+                logger.info("Successfully converted DWG to DXF using ezdxf")
+                return dxf_path
+            except Exception as ezdxf_error:
+                logger.info(f"ezdxf direct reading failed, trying other methods: {ezdxf_error}")
+
             # Try using LibreDWG (dwg2dxf) if available
             if self._check_command_available("dwg2dxf"):
                 result = subprocess.run([
@@ -43,7 +53,7 @@ class DWGProcessor:
                 else:
                     logger.warning(f"LibreDWG conversion failed: {result.stderr}")
 
-            # Try using ODA File Converter if available (Linux/Windows)
+            # Try using ODA File Converter if available
             oda_converter_paths = [
                 "ODAFileConverter",
                 "/usr/bin/ODAFileConverter",
@@ -52,9 +62,8 @@ class DWGProcessor:
 
             for converter_path in oda_converter_paths:
                 if os.path.exists(converter_path):
-                    # Use ODA File Converter
                     output_dir = os.path.dirname(dwg_path)
-                    version = "ACAD2018"  # Target version
+                    version = "ACAD2018"
                     result = subprocess.run([
                         converter_path, output_dir, output_dir, version, "DXF", "0", "1"
                     ], capture_output=True, text=True, timeout=60)
@@ -63,12 +72,24 @@ class DWGProcessor:
                         logger.info("Successfully converted DWG to DXF using ODA File Converter")
                         return dxf_path
 
-            # Fallback: Try using AutoCAD via COM (Windows only)
+            # Try using python-dxf package
+            try:
+                import dxf
+                # Try to read and convert using python-dxf
+                dxf_converter = dxf.DXF()
+                dxf_converter.load(dwg_path)
+                dxf_converter.save(dxf_path)
+                logger.info("Successfully converted DWG to DXF using python-dxf")
+                return dxf_path
+            except Exception as dxf_error:
+                logger.warning(f"python-dxf conversion failed: {dxf_error}")
+
+            # As a last resort, try AutoCAD via COM (Windows only)
             try:
                 import win32com.client
                 acad = win32com.client.Dispatch("AutoCAD.Application")
                 doc = acad.Documents.Open(dwg_path)
-                doc.SaveAs(dxf_path, 12)  # 12 = DXF format
+                doc.SaveAs(dxf_path, 12)
                 doc.Close()
                 acad.Quit()
                 logger.info("Successfully converted DWG to DXF using AutoCAD COM")
@@ -76,18 +97,15 @@ class DWGProcessor:
             except:
                 pass
 
-            # If no converter is available, try using ezdxf directly
-            try:
-                import ezdxf
-                # Some versions of ezdxf can read DWG files directly
-                doc = ezdxf.readfile(dwg_path)
-                doc.saveas(dxf_path)
-                logger.info("Successfully converted DWG to DXF using ezdxf")
-                return dxf_path
-            except Exception as ezdxf_error:
-                logger.warning(f"ezdxf direct conversion failed: {ezdxf_error}")
-
-            raise Exception("No DWG to DXF conversion method available. Please install LibreDWG (dwg2dxf) or ODA File Converter.")
+            # If all methods fail, suggest using DXF files instead
+            raise Exception(
+                "DWG to DXF conversion failed. The current environment doesn't have the required tools. "
+                "Please try uploading a DXF file instead, or ensure you have one of the following installed:\n"
+                "- LibreDWG (dwg2dxf)\n"
+                "- ODA File Converter\n"
+                "- AutoCAD (Windows only)\n"
+                "Alternatively, convert your DWG to DXF using AutoCAD, DraftSight, or online converters before uploading."
+            )
 
         except Exception as e:
             logger.error(f"Failed to convert DWG to DXF: {str(e)}")
