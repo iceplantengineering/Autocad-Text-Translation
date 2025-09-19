@@ -27,18 +27,31 @@ class DWGProcessor:
         self.supported_formats = ['.dwg', '.dxf']
 
     def convert_dwg_to_dxf(self, dwg_path: str) -> str:
-        """Convert DWG file to DXF using ODA File Converter or Teigha"""
+        """Convert DWG file to DXF using available converters"""
         try:
             dxf_path = dwg_path.rsplit('.', 1)[0] + '.dxf'
 
-            # Try using ODA File Converter if available
+            # Try using LibreDWG (dwg2dxf) if available
+            if self._check_command_available("dwg2dxf"):
+                result = subprocess.run([
+                    "dwg2dxf", "-o", dxf_path, dwg_path
+                ], capture_output=True, text=True, timeout=120)
+
+                if result.returncode == 0 and os.path.exists(dxf_path):
+                    logger.info("Successfully converted DWG to DXF using LibreDWG")
+                    return dxf_path
+                else:
+                    logger.warning(f"LibreDWG conversion failed: {result.stderr}")
+
+            # Try using ODA File Converter if available (Linux/Windows)
             oda_converter_paths = [
                 "ODAFileConverter",
+                "/usr/bin/ODAFileConverter",
                 "C:\\Program Files\\ODA\\ODAFileConverter\\ODAFileConverter.exe"
             ]
 
             for converter_path in oda_converter_paths:
-                if os.path.exists(converter_path) or converter_path in os.environ.get('PATH', ''):
+                if os.path.exists(converter_path):
                     # Use ODA File Converter
                     output_dir = os.path.dirname(dwg_path)
                     version = "ACAD2018"  # Target version
@@ -47,6 +60,7 @@ class DWGProcessor:
                     ], capture_output=True, text=True, timeout=60)
 
                     if result.returncode == 0 and os.path.exists(dxf_path):
+                        logger.info("Successfully converted DWG to DXF using ODA File Converter")
                         return dxf_path
 
             # Fallback: Try using AutoCAD via COM (Windows only)
@@ -57,15 +71,40 @@ class DWGProcessor:
                 doc.SaveAs(dxf_path, 12)  # 12 = DXF format
                 doc.Close()
                 acad.Quit()
+                logger.info("Successfully converted DWG to DXF using AutoCAD COM")
                 return dxf_path
             except:
                 pass
 
-            raise Exception("No DWG to DXF conversion method available")
+            # If no converter is available, try using ezdxf directly
+            try:
+                import ezdxf
+                # Some versions of ezdxf can read DWG files directly
+                doc = ezdxf.readfile(dwg_path)
+                doc.saveas(dxf_path)
+                logger.info("Successfully converted DWG to DXF using ezdxf")
+                return dxf_path
+            except Exception as ezdxf_error:
+                logger.warning(f"ezdxf direct conversion failed: {ezdxf_error}")
+
+            raise Exception("No DWG to DXF conversion method available. Please install LibreDWG (dwg2dxf) or ODA File Converter.")
 
         except Exception as e:
             logger.error(f"Failed to convert DWG to DXF: {str(e)}")
             raise
+
+    def _check_command_available(self, command: str) -> bool:
+        """Check if a command is available in the system PATH"""
+        try:
+            result = subprocess.run(['which', command], capture_output=True, text=True)
+            return result.returncode == 0
+        except:
+            try:
+                # Fallback for Windows
+                result = subprocess.run(['where', command], capture_output=True, text=True)
+                return result.returncode == 0
+            except:
+                return False
 
     def extract_text_entities(self, file_path: str) -> List[TextEntity]:
         """Extract text entities from DWG/DXF file"""
