@@ -24,6 +24,7 @@ body {
 .App-header {
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   padding: 2rem 1rem;
   color: white;
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
@@ -382,6 +383,7 @@ body {
 .App-footer {
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   padding: 1rem;
   color: white;
   border-top: 1px solid rgba(255, 255, 255, 0.2);
