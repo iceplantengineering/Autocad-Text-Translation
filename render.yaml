@@ -11,8 +11,9 @@ services:
   - type: web
     name: autocad-translator-backend
     runtime: python
-    buildCommand: cd backend && pip install -r requirements.txt
-    startCommand: cd backend && python app.py
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m uvicorn app:app --host 0.0.0.0 --port $PORT
+    workingDir: backend
     envVars:
       - key: PYTHON_VERSION
         value: 3.9.0
