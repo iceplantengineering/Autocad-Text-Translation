@@ -15,10 +15,15 @@ app = FastAPI(title="AutoCAD DWG Translator API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://autocad-text-translation.netlify.app",
+        "http://localhost:3000",
+        "http://localhost:8000"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"]
 )
 
 UPLOAD_DIR = "uploads"
